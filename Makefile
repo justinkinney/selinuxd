@@ -1,6 +1,16 @@
-BIN=$(BINDIR)/selinuxdctl
-BINDIR=bin
-POLICYDIR=/etc/selinux.d
+BIN=$(BUILD_BINDIR)/selinuxdctl
+BUILD_BINDIR=bin
+
+# installation directories
+PREFIX ?= /usr
+BINDIR ?= ${PREFIX}/bin
+ETCDIR ?= /etc
+POLICYDIR=${ETCDIR}/selinux.d
+LOCALSTATEDIR ?= /var/run
+SELINUXDSTATEDIR=${LOCALSTATEDIR}/selinux.d
+DATADIR=${PREFIX}/share
+POLICYTEMPLATEDIR=${DATADIR}/selinuxd/templates
+SYSTEMDDIR ?= ${PREFIX}/lib/systemd/system
 
 SRC=$(shell find . -name "*.go")
 
@@ -32,7 +42,7 @@ all: build
 .PHONY: build
 build: $(BIN)
 
-$(BIN): $(BINDIR) $(SRC) pkg/semodule/semanage/callbacks.c
+$(BIN): $(BUILD_BINDIR) $(SRC) pkg/semodule/semanage/callbacks.c
 	go build -o $(BIN) .
 
 .PHONY: test
@@ -57,8 +67,8 @@ runc: image $(POLICYDIR)
 		-v /etc/selinux.d:/etc/selinux.d \
 		$(IMAGE_REPO) daemon
 
-$(BINDIR):
-	mkdir -p $(BINDIR)
+$(BUILD_BINDIR):
+	mkdir -p $(BUILD_BINDIR)
 
 $(POLICYDIR):
 	mkdir -p $(POLICYDIR)
@@ -114,3 +124,16 @@ vagrant-up: ## Boot the vagrant based test VM
 	# Retry in case provisioning failed because of some temporarily unavailable
 	# remote resource (like the VM image)
 	vagrant up || vagrant up || vagrant up
+
+.PHONY: install
+install:
+	install -Z -d -m 755 $(DESTDIR)$(BINDIR)
+	install -Z -m 755 bin/selinuxdctl $(DESTDIR)$(BINDIR)/selinuxdctl
+	install -Z -d -m 700 $(DESTDIR)$(POLICYDIR)
+	install -Z -d -m 755 $(DESTDIR)$(SELINUXDSTATEDIR)
+
+.PHONY: install.systemd
+install.systemd:
+	install -Z -d -m 755 $(DESTDIR)$(SYSTEMDDIR)
+	install -Z -m 644 systemd/selinuxd.socket ${DESTDIR}${SYSTEMDDIR}/selinuxd.socket
+	install -Z -m 644 systemd/selinuxd.service ${DESTDIR}${SYSTEMDDIR}/selinuxd.service

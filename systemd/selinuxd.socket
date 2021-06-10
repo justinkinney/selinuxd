@@ -1,0 +1,9 @@
+[Unit]
+Description=selinuxd API Socket
+
+[Socket]
+ListenStream=%t/selinuxd/selinuxd.sock
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

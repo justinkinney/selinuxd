@@ -1,0 +1,15 @@
+[Unit]
+Description=selinuxd API Service
+Requires=selinuxd.socket
+After=selinuxd.socket
+Before=machines.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=exec
+KillMode=process
+ExecStartPre=/bin/cp -f /usr/share/selinuxd/templates/* /etc/selinux.d/
+ExecStart=/usr/bin/selinuxdctl daemon
+
+[Install]
+WantedBy=machines.target
