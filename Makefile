@@ -34,6 +34,8 @@ IMAGE_REPO?=quay.io/jaosorior/$(IMAGE_REF)
 CENTOS_IMAGE_REPO?=quay.io/jaosorior/$(IMAGE_NAME)-centos:$(IMAGE_TAG)
 FEDORA_IMAGE_REPO?=quay.io/jaosorior/$(IMAGE_NAME)-fedora:$(IMAGE_TAG)
 
+TEST_OS?=fedora
+
 # Targets
 
 .PHONY: all
@@ -114,13 +116,13 @@ fedora-image:
 push:
 	$(CONTAINER_RUNTIME) push $(IMAGE_REPO)
 
+image.tar:
+	$(MAKE) $(TEST_OS)-image && \
+	$(CONTAINER_RUNTIME) save -o image.tar $(FEDORA_IMAGE_REPO); \
+
 .PHONY: vagrant-up
-vagrant-up: ## Boot the vagrant based test VM
-	if [ ! -f image.tar ]; then \
-		make fedora-image && \
-		$(CONTAINER_RUNTIME) save -o image.tar $(FEDORA_IMAGE_REPO); \
-	fi
-	ln -sf hack/ci/Vagrantfile .
+vagrant-up: image.tar ## Boot the vagrant based test VM
+	ln -sf hack/ci/Vagrantfile-$(TEST_OS) ./Vagrantfile
 	# Retry in case provisioning failed because of some temporarily unavailable
 	# remote resource (like the VM image)
 	vagrant up || vagrant up || vagrant up
