@@ -49,7 +49,7 @@ $(BIN): $(BUILD_BINDIR) $(SRC) pkg/semodule/semanage/callbacks.c
 
 .PHONY: test
 test:
-	go test -race github.com/JAORMX/selinuxd/pkg/...
+	go test -race github.com/containers/selinuxd/pkg/...
 
 .PHONY: e2e
 e2e:
